@@ -1,2 +1,2 @@
-python-telegram-bot[rate-limiter]==21.6
+python-telegram-bot[rate-limiter,webhooks]==21.6
 yt-dlp>=2025.1.1
