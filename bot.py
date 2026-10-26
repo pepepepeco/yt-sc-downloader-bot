@@ -75,8 +75,9 @@ def resolve_cookies_file() -> tuple[str, bool]:
     """Pick the YouTube cookies file without ever logging its contents.
 
     Order: COOKIES_FILE env (if set and present), then Render's runtime
-    secret file /etc/secrets/cookies.txt (added in the Render dashboard,
-    never committed to the public repo), then a local cookies.txt.
+    secret files /etc/secrets/cookies.txt and /etc/secrets/cookies_yt.txt
+    (added in the Render dashboard, never committed to the public repo),
+    then a local cookies.txt.
     Returns (path, has_login_markers) where the markers are only the
     cookie *names* LOGIN_INFO and SAPISID, never values.
     """
@@ -85,6 +86,7 @@ def resolve_cookies_file() -> tuple[str, bool]:
     if env_path:
         candidates.append(env_path)
     candidates.append("/etc/secrets/cookies.txt")
+    candidates.append("/etc/secrets/cookies_yt.txt")
     candidates.append("cookies.txt")
     for path in candidates:
         if path and os.path.exists(path):
