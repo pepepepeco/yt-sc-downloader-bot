@@ -67,9 +67,38 @@ load_dotenv()
 TOKEN = os.environ.get("TELEGRAM_TOKEN", "").strip()
 ALLOWED_USER_ID = os.environ.get("ALLOWED_USER_ID", "").strip()
 CHANNEL_ID = os.environ.get("CHANNEL_ID", "").strip()
-COOKIES_FILE = os.environ.get("COOKIES_FILE", "").strip()
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "").strip()
 PORT = int(os.environ.get("PORT", "10000"))
+
+
+def resolve_cookies_file() -> tuple[str, bool]:
+    """Pick the YouTube cookies file without ever logging its contents.
+
+    Order: COOKIES_FILE env (if set and present), then Render's runtime
+    secret file /etc/secrets/cookies.txt (added in the Render dashboard,
+    never committed to the public repo), then a local cookies.txt.
+    Returns (path, has_login_markers) where the markers are only the
+    cookie *names* LOGIN_INFO and SAPISID, never values.
+    """
+    candidates = []
+    env_path = os.environ.get("COOKIES_FILE", "").strip()
+    if env_path:
+        candidates.append(env_path)
+    candidates.append("/etc/secrets/cookies.txt")
+    candidates.append("cookies.txt")
+    for path in candidates:
+        if path and os.path.exists(path):
+            try:
+                with open(path, encoding="utf-8", errors="ignore") as fh:
+                    text = fh.read()
+                logged_in = ("LOGIN_INFO" in text) and ("SAPISID" in text)
+            except OSError:
+                logged_in = False
+            return path, logged_in
+    return "", False
+
+
+COOKIES_FILE, COOKIES_LOGGED_IN = resolve_cookies_file()
 
 
 def is_owner(user_id: int) -> bool:
@@ -390,6 +419,15 @@ async def on_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     if not TOKEN:
         raise SystemExit("TELEGRAM_TOKEN is not set. See .env.example")
+    # Startup status only: path + whether login markers are present.
+    # Never print cookie values.
+    if COOKIES_FILE:
+        print(f"YouTube cookies: found ({COOKIES_FILE}), "
+              f"logged-in markers: {'yes' if COOKIES_LOGGED_IN else 'no'}",
+              flush=True)
+    else:
+        print("YouTube cookies: not found - unauthenticated requests "
+              "may hit YouTube bot-check", flush=True)
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", start))
