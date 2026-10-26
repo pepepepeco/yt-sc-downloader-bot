@@ -1,0 +1,20 @@
+# Render: یک Web Service از روی همین مخزن/Dockerfile بساز،
+# بعد در Environment متغیرها را بگذار:
+#   TELEGRAM_TOKEN=...
+#   ALLOWED_USER_ID=... (اختیاری)
+#   CHANNEL_ID=@new_post0 یا -100... (اختیاری؛ برای پست در کانال، بات باید ادمین کانال باشد)
+#   WEBHOOK_URL=https://<نام-سرویس-تو>.onrender.com
+# برای کار یک ماهه بدون خوابیدن: plan را به starter تغییر بده (پولی، بدون sleep).
+# نسخه رایگان بعد از ۱۵ دقیقه بی‌کاری می‌خوابد.
+# نکته: نسخه رایگان Render بعد از ۱۵ دقیقه بی‌کاری می‌خوابد و با اولین
+# پیام تلگرام حدود یک دقیقه طول می‌کشد تا بیدار شود. این «همیشه‌روشنِ
+# واقعی» نیست؛ برای همیشه‌روشن واقعی بخش Oracle در README را ببین.
+services:
+  - type: web
+    name: yt-sc-downloader-bot
+    env: docker
+    plan: free
+    # Do NOT set a Health Check Path: without one Render falls back to a
+    # TCP port check, which the webhook server passes. A /health path would
+    # fail because the bot only serves the webhook route.
+    # Do NOT set PORT either: Render injects it, and bot.py defaults to 10000.
